@@ -102,7 +102,7 @@ async def tmdb_get(path: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return r.json()
 
 
-async def tmdb_cards_from_result(
+async def tmdb_cards_from_results(
         results: List[Dict], limit: int = 20
 ) -> List[TMDBMovieCard]:
     out: List[TMDBMovieCard] = []
@@ -110,7 +110,7 @@ async def tmdb_cards_from_result(
     for m in (results or [])[:limit]:
         out.append(
             TMDBMovieCard(
-                tmdb_id=int(m["tmdb_id"]),
+                tmdb_id=int(m["id"]),
                 title=m.get("title") or m.get("name") or "",
                 poster_url=make_img_url(m.get("poster_path")),
                 release_date=m.get("release_date"),
@@ -122,27 +122,27 @@ async def tmdb_cards_from_result(
 
 
 async def tmdb_movie_detail(movie_id: int) -> TMDBMovieDetails:
-    data = await tmdb_get(f"/movies/{movie_id}", {"language": "en-US}"})
+    data = await tmdb_get(f"/movie/{movie_id}", {"language": "en-US"})
     return TMDBMovieDetails(
-        tmdb_id=int(data["tmdb_id"]),
+        tmdb_id=int(data["id"]),
         title=data.get("title") or "",
         overview=data.get("overview"),
         release_date=data.get("release_date"),
         poster_url=make_img_url(data.get("poster_url")),
-        backdrop_url=make_img_url(data.get("backdrop_path"),
-        genres=data.get("genres", []) or []),
+        backdrop_url=make_img_url(data.get("backdrop_path")),
+        genres=data.get("genres", []) or [],
     )
 
-async def tmdb_search_movies(query: str, limit: int = 1) -> Dict[str, Any]:
-        return await tmdb_get(
-            "/search/movie",
-            {
-             "query": query,
-             "include_adult": "false",
-             "language": "en-US",
-             "page": page,
-             },
-        )
+async def tmdb_search_movies(query: str, page: int = 1) -> Dict[str, Any]:
+    return await tmdb_get(
+        "/search/movie",
+        {
+            "query": query,
+            "include_adult": "false",
+            "language": "en-US",
+            "page": page,
+        },
+    )
 
 async def tmdb_search_first(query: str) -> Optional[Dict]:
     data = await tmdb_search_movies(query=query, page=1)
@@ -168,12 +168,16 @@ def build_title_to_idx_map(indices: Any) -> Dict[str, int]:
 
 def get_local_idx_by_title(title: str) -> int:
     global TITLE_TO_IDX
+
     if TITLE_TO_IDX is None:
         raise HTTPException(status_code=404, detail="TF-IDF index map not initialized")
-        key=_norm_title(title)
-        if key in TITLE_TO_IDX:
-            return int(TITLE_TO_IDX[key])
-        raise HTTPException(status_code=404, detail=f"Title not found in local dataset: '{title}'")
+
+    key = _norm_title(title)
+
+    if key in TITLE_TO_IDX:
+        return int(TITLE_TO_IDX[key])
+
+    raise HTTPException(status_code=404, detail=f"Title not found: {title}")
 
 def tfidf_recommend_titles(
     query_title: str, top_n: int = 10
