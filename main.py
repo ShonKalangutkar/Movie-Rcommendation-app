@@ -85,7 +85,7 @@ async def tmdb_get(path: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            r = await client.get(f"{TMDB_BASE}{path}", params=q)
+            r = await client.get(f"{TMDB_BASE_URL}{path}", params=q)
 
     except httpx.RequestError as e:
         raise HTTPException(
