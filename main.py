@@ -13,10 +13,10 @@ load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
-TMDB_IMG_500 = "https://images.tmdb.org/t/p/w500"
+TMDB_IMG_500 = "https://image.tmdb.org/t/p/w500"
 
 if not TMDB_API_KEY:
-    raise RuntimeError("TMDB_API_KEY missing. Put it in .env")
+    print("WARNING: TMDB_API_KEY not set")
 
 
 app = FastAPI(title="Movie Recommender API", version="1.0")
